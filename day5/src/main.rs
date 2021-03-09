@@ -2,18 +2,16 @@
 
 // plane : 128 rows, 8 columns
 
-// TODO : NOT FINISHED
-
 const MIN_ROW: u8 = 0;
 const MAX_ROW: u8 = 127;
 
 const MIN_COLUMN: u8 = 0;
 const MAX_COLUMN: u8 = 7;
 
-use std::fs;
 use std::clone::Clone;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::fs;
 use std::marker::Copy;
 
 #[derive(Debug, Copy, Clone)]
@@ -100,10 +98,19 @@ fn main() {
         seats.push(Seat::from_reference(seat_row));
     }
 
-    let plain = Plain {
+    let mut plain = Plain {
         seats,
         memo: HashMap::new(),
     };
-    let max_seat = Seat::from_reference("BBBBBBFRRR");
-    println!("{}", max_seat.get_id());
+    let max_seat = Seat::from_reference("BBBBBBBRRR");
+
+    for seat_id in 1..max_seat.get_id() {
+        if plain.get_seat_by_id(seat_id - 1).is_some()
+            && plain.get_seat_by_id(seat_id).is_none()
+            && plain.get_seat_by_id(seat_id + 1).is_some()
+        {
+            println!("{}", seat_id);
+            break;
+        }
+    }
 }
