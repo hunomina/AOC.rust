@@ -59,6 +59,7 @@ impl Board {
     fn is_line_complete(&self, index: usize) -> bool {
         self.cells[index].iter().find(|cell| !cell.drawn).is_none()
     }
+
     fn is_column_complete(&self, index: usize) -> bool {
         self.cells
             .iter()
@@ -137,7 +138,7 @@ fn parse_input(input: &str) -> Game {
         .map(|n| n.parse().unwrap())
         .collect();
 
-    let boards: Vec<Board> = parts
+    let boards = parts
         .iter()
         .map(|part| {
             let cells = part
@@ -146,9 +147,9 @@ fn parse_input(input: &str) -> Game {
                     line.trim()
                         .split_ascii_whitespace()
                         .map(|n| Cell::new(n.parse().unwrap()))
-                        .collect::<Vec<Cell>>()
+                        .collect()
                 })
-                .collect::<Vec<Vec<Cell>>>();
+                .collect();
 
             Board { cells }
         })
@@ -168,11 +169,10 @@ fn part1(mut game: Game) -> u32 {
 }
 
 fn part2(mut game: Game) -> u32 {
-    let boards_len = game.boards.len();
     for drawn_number in game.drawn_numbers.to_owned().into_iter() {
         game.new_draw(drawn_number);
         if game.boards.len() == 0 {
-            return game.won_boards[boards_len - 1].get_undrawned_cells_score()
+            return game.won_boards[game.won_boards.len() - 1].get_undrawned_cells_score()
                 * drawn_number as u32;
         }
     }
