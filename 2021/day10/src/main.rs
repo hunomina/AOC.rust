@@ -44,17 +44,13 @@ fn part2(mut entries: Vec<Vec<char>>) -> u64 {
         .iter_mut()
         .filter_map(|entry| validate_entry(entry, 0).is_incomplete().then(|| entry))
         .map(|incomplete_entry| {
-            // since entry is passed as &mut entry on the filter_map, some of the chars have already been removed
-            let mut added_chars = vec![];
-            while let EntryState::Incomplete(last_valid_position) =
-                validate_entry(incomplete_entry, 0)
-            {
-                let pair = get_pair(&incomplete_entry[last_valid_position]);
-                added_chars.push(pair);
-                incomplete_entry.insert(last_valid_position + 1, pair);
-            }
-
-            get_point_for_added_chars(added_chars)
+            // since entry is passed as a mutable ref on theprevious filter_map
+            // all valid pairs have already been removed from it in order to detect it as incomplete
+            let mut added_chars: Vec<_> = incomplete_entry.iter().map(get_pair).collect();
+            added_chars.reverse();
+            added_chars
+                .into_iter()
+                .fold(0, |acc, c| acc * 5 + get_point_for_char_part2(&c))
         })
         .collect();
 
@@ -136,9 +132,12 @@ fn get_point_for_char_part2(c: &char) -> u64 {
         _ => 0,
     }
 }
+<<<<<<< HEAD
 
 fn get_point_for_added_chars(chars: Vec<char>) -> u64 {
     chars
         .into_iter()
         .fold(0, |acc, c| acc * 5 + get_point_for_char_part2(&c))
 }
+=======
+>>>>>>> fd3191a01f09c57438e597344effadcd5c003478
