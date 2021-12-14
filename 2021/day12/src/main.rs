@@ -35,41 +35,17 @@ fn parse_input(input: &str) -> HashMap<&str, Vec<&str>> {
 }
 
 fn part1(caves: HashMap<&str, Vec<&str>>) -> usize {
-    get_paths_to_end_part1(&caves, vec![START]).len()
+    get_paths_to_end_part(&caves, vec![START], can_visit_cave_part1).len()
 }
 
 fn part2(caves: HashMap<&str, Vec<&str>>) -> usize {
-    get_paths_to_end_part2(&caves, vec![START]).len()
+    get_paths_to_end_part(&caves, vec![START], can_visit_cave_part2).len()
 }
 
-fn get_paths_to_end_part1<'a>(
+fn get_paths_to_end_part<'a>(
     caves: &'a HashMap<&str, Vec<&str>>,
     from: Vec<&'a str>,
-) -> Vec<Vec<&'a str>> {
-    caves
-        .get(from.last().unwrap())
-        .unwrap()
-        .into_iter()
-        .filter_map(|linked_cave| {
-            if is_small_cave(linked_cave) && from.contains(linked_cave) {
-                None
-            } else if *linked_cave == END {
-                let mut local_from = from.clone();
-                local_from.push(linked_cave);
-                Some(vec![local_from])
-            } else {
-                let mut local_from = from.clone();
-                local_from.push(linked_cave);
-                Some(get_paths_to_end_part1(&caves, local_from))
-            }
-        })
-        .flatten()
-        .collect()
-}
-
-fn get_paths_to_end_part2<'a>(
-    caves: &'a HashMap<&str, Vec<&str>>,
-    from: Vec<&'a str>,
+    can_visit_cave: fn(&Vec<&str>, &str) -> bool,
 ) -> Vec<Vec<&'a str>> {
     caves
         .get(from.last().unwrap())
@@ -83,7 +59,7 @@ fn get_paths_to_end_part2<'a>(
             } else if can_visit_cave(&from, linked_cave) {
                 let mut local_from = from.clone();
                 local_from.push(linked_cave);
-                Some(get_paths_to_end_part2(&caves, local_from))
+                Some(get_paths_to_end_part(&caves, local_from, can_visit_cave))
             } else {
                 None
             }
@@ -96,7 +72,17 @@ fn is_small_cave(cave: &str) -> bool {
     cave.chars().nth(0).unwrap().is_lowercase()
 }
 
-fn can_visit_cave<'a>(history: &Vec<&str>, cave: &str) -> bool {
+fn can_visit_cave_part1(history: &Vec<&str>, cave: &str) -> bool {
+    if cave == START || cave == END {
+        false
+    } else if is_small_cave(cave) {
+        count_cave_occurence(&history, cave) == 0
+    } else {
+        true
+    }
+}
+
+fn can_visit_cave_part2(history: &Vec<&str>, cave: &str) -> bool {
     if cave == START || cave == END {
         false
     } else if is_small_cave(cave) {
@@ -115,12 +101,12 @@ fn count_max_occurence_of_small_caves(history: &Vec<&str>) -> usize {
     history
         .iter()
         .filter(|cave| is_small_cave(cave))
-        .fold(HashMap::<&str, usize>::new(), |mut m, x| {
+        .fold(HashMap::new(), |mut m, x| {
             *m.entry(x).or_default() += 1;
             m
         })
         .into_iter()
         .max_by_key(|(_, v)| *v)
-        .map(|(_, v)| v)
         .unwrap()
+        .1
 }
