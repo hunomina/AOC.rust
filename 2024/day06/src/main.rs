@@ -43,44 +43,38 @@ fn parse_input(input: &str) -> Input {
 }
 
 fn part1(input: Input) -> usize {
-    let mut set = HashSet::new();
-    let circuit = get_circuit(find_initial_position(&input), &input).unwrap();
-
-    for (x, y, _) in circuit.into_iter() {
-        set.insert((x, y));
-    }
-
-    set.len()
+    get_circuit(find_initial_position(&input), &input)
+        .unwrap()
+        .len()
 }
 
 fn part2(mut input: Input) -> usize {
     let initial_position = find_initial_position(&input);
 
-    let mut r = 0;
-    for x in 0..input.len() {
-        for y in 0..input[x].len() {
+    get_circuit(initial_position, &input)
+        .unwrap()
+        .into_iter()
+        .fold(0, |mut acc, (x, y)| {
             let cell = input[x][y];
             if cell != '.' {
-                continue;
+                return acc;
             }
 
             input[x][y] = '#';
 
             if get_circuit(initial_position, &input).is_none() {
-                r += 1;
+                acc += 1;
             }
 
             input[x][y] = '.';
-        }
-    }
-
-    r
+            acc
+        })
 }
 
 fn get_circuit(
     (mut x, mut y, mut direction): (usize, usize, Direction),
     input: &Input,
-) -> Option<HashSet<(usize, usize, Direction)>> {
+) -> Option<HashSet<(usize, usize)>> {
     let mut history = HashSet::new();
 
     while x != 0 && x != input.len() - 1 && y != 0 && y != input[0].len() - 1 {
@@ -104,7 +98,7 @@ fn get_circuit(
         y = next_position.1;
     }
 
-    Some(history)
+    Some(history.into_iter().map(|(x, y, _)| (x, y)).collect())
 }
 
 fn find_initial_position(map: &Input) -> (usize, usize, Direction) {
