@@ -24,34 +24,16 @@ fn part1(input: Input) -> u64 {
     let mut blank = false;
     for n in input.iter() {
         for _ in 0..*n {
-            if blank {
-                disk.push(None);
-            } else {
-                disk.push(Some(id));
-            }
+            disk.push((if blank { None } else { Some(id) }, 1));
         }
+
         if !blank {
             id += 1;
         }
         blank = !blank;
     }
 
-    let disk_len = disk.len();
-    for i in 0..disk_len {
-        let item = disk[i];
-        if item.is_some() {
-            continue;
-        }
-
-        if !disk[i..].iter().any(|v| v.is_some()) {
-            break;
-        }
-
-        let swap_position = disk.iter().rev().position(|ll| ll.is_some()).unwrap();
-        disk.swap(i, disk_len - 1 - swap_position);
-    }
-
-    compute_checksum(disk.into_iter())
+    compute_checksum(reorganize_disk(disk))
 }
 
 fn part2(input: Input) -> u64 {
@@ -60,10 +42,8 @@ fn part2(input: Input) -> u64 {
     let mut id = 0;
     let mut blank = false;
     for n in input.iter() {
-        let v = if blank { None } else { Some(id) };
-
         if *n > 0 {
-            disk.push(vec![v; *n as usize]);
+            disk.push((if blank { None } else { Some(id) }, *n));
         }
 
         if !blank {
@@ -72,18 +52,22 @@ fn part2(input: Input) -> u64 {
         blank = !blank;
     }
 
+    compute_checksum(reorganize_disk(disk))
+}
+
+fn reorganize_disk(mut disk: Vec<(Option<u64>, u64)>) -> Vec<(Option<u64>, u64)> {
     for i in 0..disk.len() {
         let current_position = disk.len() - 1 - i;
 
-        if disk[current_position][0].is_none() {
+        if disk[current_position].0.is_none() {
             continue;
         }
 
-        let current_partition_len = disk[current_position].len();
+        let current_partition_len = disk[current_position].1;
 
         let swap_position = disk
             .iter()
-            .position(|ll| ll.len() >= disk[current_position].len() && ll[0].is_none());
+            .position(|partition| partition.1 >= current_partition_len && partition.0.is_none());
 
         if swap_position.is_none() || swap_position.unwrap() >= current_position {
             continue;
@@ -91,24 +75,31 @@ fn part2(input: Input) -> u64 {
 
         let swap_position = swap_position.unwrap();
 
-        let swapped_partition_len = disk[swap_position].len();
-        // truncate swap partition
-        disk.get_mut(swap_position)
-            .unwrap()
-            .truncate(current_partition_len);
+        let swap_partition_len = disk[swap_position].1;
+
+        disk.get_mut(swap_position).unwrap().1 = current_partition_len;
 
         disk.swap(current_position, swap_position);
 
-        let empty_partition_len = swapped_partition_len - current_partition_len;
+        let empty_partition_len = swap_partition_len - current_partition_len;
         if empty_partition_len > 0 {
-            disk.insert(swap_position + 1, vec![None; empty_partition_len]);
+            disk.insert(swap_position + 1, (None, empty_partition_len));
         }
     }
 
-    compute_checksum(disk.into_iter().flatten())
+    disk
 }
 
-fn compute_checksum<I: Iterator<Item = Option<u64>>>(iter: I) -> u64 {
-    iter.enumerate()
-        .fold(0, |acc, (i, v)| acc + i as u64 * v.unwrap_or(0))
+fn compute_checksum(disk: Vec<(Option<u64>, u64)>) -> u64 {
+    let mut checksum = 0;
+
+    let mut i = 0;
+    for (partition_id, file_size) in disk.into_iter() {
+        for _ in 0..file_size {
+            checksum += partition_id.unwrap_or(0) * i;
+            i += 1;
+        }
+    }
+
+    checksum
 }
